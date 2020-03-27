@@ -1,0 +1,99 @@
+PROGRAM LOGREG			-- program name declaration
+
+%NOLOCKGROUP			-- No motion group can be run when other programs have motion
+%NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
+%NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
+
+%COMMENT = 'MOVE RGSTR TO .LOG UPON TRIG'
+
+CONST
+	TPE_TYP_INT = 1
+	TPE_TYP_REAL = 2
+	TPE_TYP_STR = 3
+VAR			-- Variable declaration start
+	logFile 		: FILE			-- handles what .log file will be created/written to
+	regID		: INTEGER		-- handles register to pull from
+	fileDest		: STRING[16]	-- handles log file save desitination
+	dataType	: INTEGER		-- describes datatype input (1=int, 2=real, 3=string)
+	status		: INTEGER		-- '0' denotes normal status, anything else non-zero indicates an error
+	intVal		: INTEGER		-- defines the value of 1 made avaiable to dataType
+	realVal		: REAL			-- defines the value of 2 made avaiable to dataType
+	strVal		:STRING[1]		-- defines the value of 3 made avaiable to dataType
+
+
+
+ROUTINE GET_TPE_PRM2 (paramNo : INTEGER; exptype : INTEGER; intVal : INTEGER; realVal : REAL; strVAL : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
+VAR
+	dataType	: INTEGER
+	status		: INTEGER
+BEGIN		--program beginning of GET_TPE_PRM2
+	GET_TPE_PRM(paramNo, dataType, intVal, realVal, strVal, status)
+	IF status<>0 THEN
+		WRITE TPERROR('[LOGREG] could not get TPE param', paramNo, CR)
+		ABORT
+	ENDIF
+	
+	IF dataType<>expType THEN
+		WRITE TPERROR('{LOGREG] bad datatype for param', paramNo, CR)
+		ABORT
+	ENDIF
+END GET_TPE_PRM2
+		
+		
+		
+ROUTINE GET_TPE_INT (paramNo : INTEGER; intVal : INTEGER) 	-- gets the GET_TPE_PRM2 its INTEGER component
+VAR
+	realVal	: REAL
+	strVal	: STRING[1]
+BEGIN		-- program beginning of GET_TPE_INT
+	GET_TPE_PRM2(paramNo, TPE_TYP_INT, intVal, realVal, strVal)
+END GET_TPE_INT
+	
+	
+ROUTINE GET_TPE_STR (paramNo : INTEGER; strVal : STRING)	-- gets the GET_TPE_PRM2 its STRING component
+VAR
+	intVal	: INTEGER
+	realVal	: REAL
+BEGIN		-- program beginning of GET_TPE_STR
+	GET_TPE_PRM2(paramNo, TPE_TYP_STR, intVal, realVal, strVal)
+END GET_TPE_STR
+
+
+
+ROUTINE CNV_TIME_ST2 (timeIn : INTEGER; timeOut : STRING)
+VAR
+	secondsI : INTEGER
+	secondsS : STRING[4]
+BEGIN		-- PROGRAM beginning of the timestamp generator
+	-- use FANUC built-in functionality to do most of the work
+	CNV_TIME_STR(timeIn, timeOut)
+	-- chop off trailing spaces, if any are present
+	timeOut = SUB_STR(timeOut, 1, 15)
+	-- add trailing ':' character
+	timeOut = timeOut +':'
+	
+	--get seconds
+	secondsI = timeIn AND 31
+	secondsI = secondsI * 2
+	
+	-- convert to string
+	CNV_INT_STR(secondsI, 2, 0, secondsS)
+	-- get rid of leading space
+	secondsS = SUB_STR(secondsS, 2, 2)
+	-- add leading zero if required
+	IF timeIn < 10 THEN
+		secondsS = '0' + secondsS
+	ENDIF
+	
+	timeOut = timeOut + secondsS
+END CNV_TIME_ST2
+
+
+
+BEGIN		-- Program beginning of MAIN
+	-- clear the TPERROR screen 
+	WRITE TPERROR(CHR(128)) -- CHR(128) is an interally defined special 128-bit character code that clears the window
+	
+	GET_TPE_INT(1, regID)
+	GET_TPE_STR(2, fileDest)
+END LOGREG			-- End program 
