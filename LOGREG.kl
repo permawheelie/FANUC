@@ -26,40 +26,40 @@ VAR			-- Variable declaration start
 
 
 
-ROUTINE GET_TPE_PRM2 (paramNo : INTEGER; exptype : INTEGER; intVal : INTEGER; realVal : REAL; strVAL : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
+ROUTINE GET_TPE_PRM2 (param_no : INTEGER; exp_type : INTEGER; int_val : INTEGER; real_val : REAL; str_val : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
 VAR
-	dataType	: INTEGER
+	data_type	: INTEGER
 	status		: INTEGER
 BEGIN		--program beginning of GET_TPE_PRM2
-	GET_TPE_PRM2(paramNo, dataType, intVal, realVal, strVal, status)
+	GET_TPE_PRM(param_no, data_type, int_val, real_val, str_val, status)
 	IF status<>0 THEN
-		WRITE TPERROR('[LOGREG] could not get TPE param', paramNo, CR)
+		WRITE TPERROR('[LOGREG] could not get TPE param', param_no, CR)
 		ABORT
 	ENDIF
 	
-	IF dataType<>expType THEN
-		WRITE TPERROR('{LOGREG] bad datatype for param', paramNo, CR)
+	IF data_type<>exp_type THEN
+		WRITE TPERROR('[LOGREG] bad datatype for param', param_no, CR)
 		ABORT
 	ENDIF
 END GET_TPE_PRM2
 		
 		
 		
-ROUTINE GET_TPE_INT (paramNo : INTEGER; intVal : INTEGER) 	-- gets the GET_TPE_PRM2 its INTEGER component
+ROUTINE GET_TPE_INT (param_no : INTEGER; int_val : INTEGER) 	-- gets the GET_TPE_PRM2 its INTEGER component
 VAR
-	realVal	: REAL
-	strVal	: STRING[1]
+	real_val	: REAL
+	str_val	: STRING[1]
 BEGIN		-- program beginning of GET_TPE_INT
-	GET_TPE_PRM2(paramNo, TPE_TYP_INT, intVal, realVal, strVal)
+	GET_TPE_PRM2(param_no, TPE_TYP_INT, int_val, real_val, str_val)		-- intVal, realVal, and strVal must all be present in this call , regardless of if they are not all used
 END GET_TPE_INT
 	
 	
-ROUTINE GET_TPE_STR (paramNo : INTEGER; strVal : STRING)	-- gets the GET_TPE_PRM2 its STRING component
+ROUTINE GET_TPE_STR (param_no : INTEGER; str_val : STRING)	-- gets the GET_TPE_PRM2 its STRING component
 VAR
-	intVal	: INTEGER
-	realVal	: REAL
+	int_val	: INTEGER
+	real_val	: REAL
 BEGIN		-- program beginning of GET_TPE_STR
-	GET_TPE_PRM2(paramNo, TPE_TYP_STR, intVal, realVal, strVal)
+	GET_TPE_PRM2(param_no, TPE_TYP_STR, int_val, real_val, str_val)	-- intVal, realVal, and strVal must all be present in this call , regardless of if they are not all used
 END GET_TPE_STR
 
 
