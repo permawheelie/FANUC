@@ -4,7 +4,7 @@ PROGRAM LOGREG			-- program name declaration
 %NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
 %NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
 
-%COMMENT = 'MOVE RGSTR TO .LOG UPON TRIG'
+%COMMENT = 'MOVE PR TO .LOG UPON TRIG'
 
 CONST
 	TPE_TYP_INT = 1
@@ -12,13 +12,17 @@ CONST
 	TPE_TYP_STR = 3
 VAR			-- Variable declaration start
 	logFile 		: FILE			-- handles what .log file will be created/written to
-	regID		: INTEGER		-- handles register to pull from
-	fileDest		: STRING[16]	-- handles log file save desitination
-	dataType	: INTEGER		-- describes datatype input (1=int, 2=real, 3=string)
+	prmPosRegID	: INTEGER		-- handles which position register to pull from
+	prmLogFile		: STRING[16]	-- handles log file save desitination
+	timeInt		: INTEGER		-- storage location for real-time world clock value
+	timeStr		: STRING[18]	-- storage location for post int-to-string conversion of the world clock
+	posreg		: XYZWPR		-- temporary variable used to input PR data to GET_POS_REG
 	status		: INTEGER		-- '0' denotes normal status, anything else non-zero indicates an error
-	intVal		: INTEGER		-- defines the value of 1 made avaiable to dataType
-	realVal		: REAL			-- defines the value of 2 made avaiable to dataType
-	strVal		:STRING[1]		-- defines the value of 3 made avaiable to dataType
+	
+	-- dataType	: INTEGER		-- describes datatype input (1=int, 2=real, 3=string)
+	-- intVal		: INTEGER		-- defines the value of 1 made avaiable to dataType
+	-- realVal		: REAL			-- defines the value of 2 made avaiable to dataType
+	-- strVal		:STRING[1]		-- defines the value of 3 made avaiable to dataType
 
 
 
@@ -27,7 +31,7 @@ VAR
 	dataType	: INTEGER
 	status		: INTEGER
 BEGIN		--program beginning of GET_TPE_PRM2
-	GET_TPE_PRM(paramNo, dataType, intVal, realVal, strVal, status)
+	GET_TPE_PRM2(paramNo, dataType, intVal, realVal, strVal, status)
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not get TPE param', paramNo, CR)
 		ABORT
@@ -92,8 +96,44 @@ END CNV_TIME_ST2
 
 BEGIN		-- Program beginning of MAIN
 	-- clear the TPERROR screen 
-	WRITE TPERROR(CHR(128)) -- CHR(128) is an interally defined special 128-bit character code that clears the window
+	WRITE TPERROR(CHR(128)) 	-- CHR(128) is an interally defined special 128-bit character code that clears the window
 	
-	GET_TPE_INT(1, regID)
-	GET_TPE_STR(2, fileDest)
-END LOGREG			-- End program 
+	GET_TPE_INT(1, prmPosRegID)
+	GET_TPE_STR(2, prmLogFile)
+	
+	GET_TIME(timeInt)
+	CNV_TIME_ST2(timeInt, timeStr)
+	
+	posreg = GET_POS_REG(prmPosRegID, status)
+	IF status<>0 THEN
+		WRITE TPERROR('[LOGREG} could not get PR', prmPosRegID, CR)
+		ABORT
+	ENDIF
+	IF UNINIT(posreg) THEN
+		WRITE TPERROR('[LOGREG] PR', prmPosRegID, ' is UNINIT', CR)
+		ABORT
+	ENDIF
+	
+	OPEN FILE logFile('AP', prmLogFile) 	-- opens (if not creates then opens) a log file with append (AP) file access privileges
+	status = IO_STATUS(logFile)
+	IF status<>0 THEN
+		WRITE TPERROR('[LOGREG] could not open logFile', prmLogFile, CR)
+		ABORT
+	ENDIF
+	WRITE logFile (timeStr, ',',
+		prmPosRegID, ',',		
+		posreg.x::9::3, ',',
+		posreg.y::9::3, ',',
+		posreg.z::9::3, ',',
+		posreg.w::9::3, ',',
+		posreg.p::9::3, ',',
+		posreg.r::9::3, CR)		-- write the X, Y, Z, W, P, and R PR fields of the PR sequentially. '::9::3' indicated that this information will be 9 total characters in length (::9), taken to 3 decimal places (::3) after first writing the curren time
+	status = IO_STATUS(logFile)
+	IF status<>0 THEN
+		WRITE TPERROR('[LOGREG] error writing to logFile', status, CR)
+		ABORT
+	ENDIF
+	
+	CLOSE FILE logFile
+	
+END LOGREG		-- End program 
