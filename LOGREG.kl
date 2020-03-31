@@ -1,8 +1,8 @@
 PROGRAM LOGREG			-- program name declaration
 
-%NOLOCKGROUP			-- No motion group can be run when other programs have motion
-%NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
-%NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
+ -- %NOLOCKGROUP			-- No motion group can be run when other programs have motion
+ -- %NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
+ -- %NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
 
 %COMMENT = 'MOVE PR TO .LOG UPON TRIG'
 
@@ -16,22 +16,23 @@ VAR			-- Variable declaration start
 	prmLogFile		: STRING[16]	-- handles log file save desitination
 	timeInt		: INTEGER		-- storage location for real-time world clock value
 	timeStr		: STRING[18]	-- storage location for post int-to-string conversion of the world clock
-	posreg		: XYZWPR		-- temporary variable used to input PR data to GET_POS_REG
 	status		: INTEGER		-- '0' denotes normal status, anything else non-zero indicates an error
-	
-	-- dataType	: INTEGER		-- describes datatype input (1=int, 2=real, 3=string)
-	-- intVal		: INTEGER		-- defines the value of 1 made avaiable to dataType
-	-- realVal		: REAL			-- defines the value of 2 made avaiable to dataType
-	-- strVal		:STRING[1]		-- defines the value of 3 made avaiable to dataType
-
+	posreg		: XYZWPR		-- temporary variable used to input PR data to GET_POS_REG
 
 
 ROUTINE GET_TPE_PRM2 (param_no : INTEGER; exp_type : INTEGER; int_val : INTEGER; real_val : REAL; str_val : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
 VAR
 	data_type	: INTEGER
 	status		: INTEGER
+	
+	
 BEGIN		--program beginning of GET_TPE_PRM2
+	
 	GET_TPE_PRM(param_no, data_type, int_val, real_val, str_val, status)
+	-- GET_TPE_PRM(1, 1, 6, 0, '0', 0)		-- this line is unkowingly able to pass the if status<>0 condition below
+	
+	status = 0
+	
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not get TPE param', param_no, CR)
 		ABORT
@@ -50,7 +51,7 @@ VAR
 	real_val	: REAL
 	str_val	: STRING[1]
 BEGIN		-- program beginning of GET_TPE_INT
-	GET_TPE_PRM2(param_no, TPE_TYP_INT, int_val, real_val, str_val)		-- intVal, realVal, and strVal must all be present in this call , regardless of if they are not all used
+	GET_TPE_PRM2(param_no, TPE_TYP_INT, int_val, real_val, str_val)		-- int_val, real_val, and str_val must all be present in this call , regardless of if they are not all used
 END GET_TPE_INT
 	
 	
@@ -59,7 +60,7 @@ VAR
 	int_val	: INTEGER
 	real_val	: REAL
 BEGIN		-- program beginning of GET_TPE_STR
-	GET_TPE_PRM2(param_no, TPE_TYP_STR, int_val, real_val, str_val)	-- intVal, realVal, and strVal must all be present in this call , regardless of if they are not all used
+	GET_TPE_PRM2(param_no, TPE_TYP_STR, int_val, real_val, str_val)	-- int_val, real_val, and str_val must all be present in this call , regardless of if they are not all used
 END GET_TPE_STR
 
 
@@ -96,7 +97,9 @@ END CNV_TIME_ST2
 
 BEGIN		-- Program beginning of MAIN
 	-- clear the TPERROR screen 
-	WRITE TPERROR(CHR(128)) 	-- CHR(128) is an interally defined special 128-bit character code that clears the window
+	WRITE TPERROR(CHR(128)) 	-- CHR(128) is an interally defined special 128-bit character code that clears the TPERROR window
+	
+	prmPosRegID = 6		-- temporarily hardcoding to tell the program to look at PR6 (testing to see if declaring the variable manually fixes bugs)
 	
 	GET_TPE_INT(1, prmPosRegID)
 	GET_TPE_STR(2, prmLogFile)
