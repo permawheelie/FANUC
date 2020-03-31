@@ -31,8 +31,6 @@ BEGIN		--program beginning of GET_TPE_PRM2
 	GET_TPE_PRM(param_no, data_type, int_val, real_val, str_val, status)
 	-- GET_TPE_PRM(1, 1, 6, 0, '0', 0)		-- this line is unkowingly able to pass the if status<>0 condition below
 	
-	status = 0
-	
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not get TPE param', param_no, CR)
 		ABORT
