@@ -3,6 +3,10 @@ PROGRAM LOGREG			-- program name declaration
  -- %NOLOCKGROUP			-- No motion group can be run when other programs have motion
  -- %NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
  -- %NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
+ -- %INCLUDE logFile.log -- this supposedly includes the logFile that LOGREG is supposed to write data to
+ 
+ -- %ENVIRONMENT GROUP :PBCORE
+
 
 %COMMENT = 'MOVE PR TO .LOG UPON TRIG'
 
@@ -25,12 +29,27 @@ VAR
 	data_type	: INTEGER
 	status		: INTEGER
 	
-	
 BEGIN		--program beginning of GET_TPE_PRM2
+
 	
+	-- data_type  = 1		-- this prevents the second TPERROR catch block from occurring for param 1
 	GET_TPE_PRM(param_no, data_type, int_val, real_val, str_val, status)
-	-- GET_TPE_PRM(1, 1, 6, 0, '0', 0)		-- this line is unkowingly able to pass the if status<>0 condition below
+	-- GET_TPE_PRM(1, 1, 6,  0, '0', 0)		-- this line is unkowingly able to pass the if status<>0 condition below
 	
+	IF data_type = 1 THEN
+	param_no = 3
+	ELSE
+	IF data_type = 2 THEN
+		param_no = 4
+		ELSE
+		IF data_type = 3 THEN
+			param_no = 5
+			ELSE
+			param_no = 6
+		ENDIF
+	ENDIF
+	ENDIF
+		
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not get TPE param', param_no, CR)
 		ABORT
@@ -93,7 +112,7 @@ END CNV_TIME_ST2
 
 
 
-BEGIN		-- Program beginning of MAIN
+BEGIN	-- Program beginning of MAIN
 	-- clear the TPERROR screen 
 	WRITE TPERROR(CHR(128)) 	-- CHR(128) is an interally defined special 128-bit character code that clears the TPERROR window
 	
