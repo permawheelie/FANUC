@@ -1,8 +1,8 @@
 PROGRAM LOGREG			-- program name declaration
 
- -- %NOLOCKGROUP			-- No motion group can be run when other programs have motion
- -- %NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
- -- %NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
+%NOLOCKGROUP			-- Because this program does not contain any motion
+%NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
+%NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
  -- %INCLUDE logFile.log -- this supposedly includes the logFile that LOGREG is supposed to write data to
 
 
@@ -20,6 +20,7 @@ VAR			-- Variable declaration start
 	timeStr		: STRING[18]	-- storage location for post int-to-string conversion of the world clock
 	status		: INTEGER		-- '0' denotes normal status, anything else non-zero indicates an error
 	posreg		: XYZWPR		-- temporary variable used to input PR data to GET_POS_REG
+	fileWithExt		:STRING[4]
 
 
 ROUTINE GET_TPE_PRM2 (param_no : INTEGER; exp_type : INTEGER; int_val : INTEGER; real_val : REAL; str_val : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
@@ -28,26 +29,7 @@ VAR
 	status		: INTEGER
 	
 BEGIN		--program beginning of GET_TPE_PRM2
-
-	
-	-- data_type  = 1		-- this prevents the second TPERROR catch block from occurring for param 1
-	GET_TPE_PRM(param_no, data_type, int_val, real_val, str_val, status)
-	-- GET_TPE_PRM(1, 1, 6,  0, '0', 0)		-- this line is unkowingly able to pass the if status<>0 condition below
-	
-	-- IF data_type = 1 THEN
-	--  param_no = 3
-	-- ELSE
-	-- IF data_type = 2 THEN
-	-- 	param_no = 4
-	-- 	ELSE
-	-- 	IF data_type = 3 THEN
-	-- 		param_no = 5
-	-- 		ELSE
-	-- 		param_no = 6
-	-- 	ENDIF
-	-- ENDIF
-	-- ENDIF
-		
+	GET_TPE_PRM(param_no, data_type, int_val, real_val, str_val, status)	
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not get TPE param', param_no, CR)
 		ABORT
@@ -131,8 +113,15 @@ BEGIN	-- Program beginning of MAIN
 		WRITE TPERROR('[LOGREG] PR', prmPosRegID, ' is UNINIT', CR)
 		ABORT
 	ENDIF
+	fileWithExt = prmLogFile + '.log'
+	-- IF **LOGFILE.LOG EXISTS**
+	-- OPEN FILE logFile('AP', prmLogFile) 	-- opens a log file with append (AP) file access privileges
+	-- ENDIF
+	-- IF **LOGFILE.LOG DOES NOT  EXIST**
+	CREATE_VAR (fileWithExt, 'temp', 'logFile', 'FILE' ,0, 0, 0, 0, status) -- creates logFile.log
+	OPEN FILE logFile ('AP', prmLogFile) 	-- opens a log file with append (AP) file access privileges
+	-- ENDIF
 	
-	OPEN FILE logFile('AP', prmLogFile) 	-- opens (if not creates then opens) a log file with append (AP) file access privileges
 	status = IO_STATUS(logFile)
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not open logFile', prmLogFile, CR)
