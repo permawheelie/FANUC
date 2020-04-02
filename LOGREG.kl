@@ -19,8 +19,10 @@ VAR			-- Variable declaration start
 	timeInt		: INTEGER		-- storage location for real-time world clock value
 	timeStr		: STRING[18]	-- storage location for post int-to-string conversion of the world clock
 	status		: INTEGER		-- '0' denotes normal status, anything else non-zero indicates an error
-	posreg		: XYZWPR		-- temporary variable used to input PR data to GET_POS_REG
+	posreg		: XYZWPR		-- variable used to input PR data to GET_POS_REG
 	fileWithExt		:STRING[4]
+	activeUSS	:INTEGER		-- storage location to tell which sensor is giving LOGREG its reading (1 = UIT-502, 2 = UIT-508, 3 = BANNER QT50ULBQ6)
+	distUSS	:REAL
 
 
 ROUTINE GET_TPE_PRM2 (param_no : INTEGER; exp_type : INTEGER; int_val : INTEGER; real_val : REAL; str_val : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
@@ -60,7 +62,13 @@ BEGIN		-- program beginning of GET_TPE_STR
 	GET_TPE_PRM2(param_no, TPE_TYP_STR, int_val, real_val, str_val)	-- int_val, real_val, and str_val must all be present in this call , regardless of if they are not all used
 END GET_TPE_STR
 
-
+ROUTINE GET_TPE_REAL (param_no : INTEGER; real_val : REAL)		-- gets the GET_TPE_PRM2 its REASL component
+VAR
+	int_val	: INTEGER
+	str_val		: STRING[1]
+BEGIN
+	GET_TPE_PRM2(param_no, TPE_TYP_REAL, int_val, real_val, str_val)
+END GET_TPE_REAL
 
 ROUTINE CNV_TIME_ST2 (timeIn : INTEGER; timeOut : STRING)
 VAR
@@ -100,6 +108,9 @@ BEGIN	-- Program beginning of MAIN
 	
 	GET_TPE_INT(1, prmPosRegID)
 	GET_TPE_STR(2, prmLogFile)
+	GET_TPE_INT(3, activeUSS)
+	GET_TPE_REAL(4, distUSS)
+	
 	
 	GET_TIME(timeInt)
 	CNV_TIME_ST2(timeInt, timeStr)
@@ -127,14 +138,15 @@ BEGIN	-- Program beginning of MAIN
 		WRITE TPERROR('[LOGREG] could not open logFile', prmLogFile, CR)
 		ABORT
 	ENDIF
-	WRITE logFile (timeStr, ',',
-		prmPosRegID, ',',		
-		posreg.x::9::3, ',',
-		posreg.y::9::3, ',',
-		posreg.z::9::3, ',',
-		posreg.w::9::3, ',',
-		posreg.p::9::3, ',',
-		posreg.r::9::3, CR)		-- write the X, Y, Z, W, P, and R PR fields of the PR sequentially. '::9::3' indicated that this information will be 9 total characters in length (::9), taken to 3 decimal places (::3) after first writing the curren time
+	WRITE logFile (timeStr,  ', PR:', prmPosRegID, ', Z:', posreg.z::9::3, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT:' , distUSS::9::3, CR) -- just writes the Z Value
+	 -- WRITE logFile (timeStr, ', PR:',
+	--	prmPosRegID, ', X:',		
+	--	posreg.x::9::3, ', Y:',
+	--	posreg.y::9::3, ', Z:',
+	--	posreg.z::9::3, ', W:',
+	--	posreg.w::9::3, ', P:',
+	--	posreg.p::9::3, ', R:',
+	--	posreg.r::9::3, CR)		-- write the PR index, X, Y, Z, W, P, and R fields of the PR sequentially. '::9::3' indicated that this information will be 9 total characters in length (::9), taken to 3 decimal places (::3) after first writing the curren time
 	status = IO_STATUS(logFile)
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] error writing to logFile', status, CR)
