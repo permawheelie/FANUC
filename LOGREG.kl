@@ -23,6 +23,7 @@ VAR			-- Variable declaration start
 	fileWithExt		:STRING[4]
 	activeUSS	:INTEGER		-- storage location to tell which sensor is giving LOGREG its reading (1 = UIT-502, 2 = UIT-508, 3 = BANNER QT50ULBQ6)
 	distUSS	:REAL
+	cycleCount		: INTEGER
 
 
 ROUTINE GET_TPE_PRM2 (param_no : INTEGER; exp_type : INTEGER; int_val : INTEGER; real_val : REAL; str_val : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
@@ -110,7 +111,7 @@ BEGIN	-- Program beginning of MAIN
 	GET_TPE_STR(2, prmLogFile)
 	GET_TPE_INT(3, activeUSS)
 	GET_TPE_REAL(4, distUSS)
-	
+	GET_TPE_INT(5, cycleCount)
 	
 	GET_TIME(timeInt)
 	CNV_TIME_ST2(timeInt, timeStr)
@@ -138,7 +139,7 @@ BEGIN	-- Program beginning of MAIN
 		WRITE TPERROR('[LOGREG] could not open logFile', prmLogFile, CR)
 		ABORT
 	ENDIF
-	WRITE logFile (timeStr,  ', PR:', prmPosRegID, ', Z:', posreg.z::9::3, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT:' , distUSS::9::3, CR) -- just writes the Z Value
+	WRITE logFile (timeStr,  ', PR:', prmPosRegID, ', Z:', posreg.z::9::3, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT:', distUSS::9::3, ', cycle:', cycleCount, CR) -- testing entries along with the z pos
 	 -- WRITE logFile (timeStr, ', PR:',
 	--	prmPosRegID, ', X:',		
 	--	posreg.x::9::3, ', Y:',
