@@ -142,7 +142,10 @@ BEGIN	-- Program beginning of MAIN
 		WRITE TPERROR('[LOGREG] could not open logFile', prmLogFile, CR)
 		ABORT
 	ENDIF
-	WRITE logFile (timeStr,  ', PR:', prmPosRegID, ', Z:', posreg.z::9::3, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT (mm):', distUSS::9::3, ', cycle:', cycleCount, CR) -- testing entries along with the z pos
+	
+	prmPosRegID = prmPosRegID - 10
+	
+	WRITE logFile (timeStr,  ', PROBE POSITION:', prmPosRegID, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT (mm):', distUSS::9::3, ', Z:', posreg.z::9::3,', cycle:', cycleCount, CR) -- testing entries along with the z pos
 	 -- WRITE logFile (timeStr, ', PR:',
 	--	prmPosRegID, ', X:',		
 	--	posreg.x::9::3, ', Y:',
