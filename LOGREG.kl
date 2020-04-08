@@ -1,5 +1,8 @@
 PROGRAM LOGREG			-- program name declaration
 
+ -- LOGREG.kl is a logging utility designed to take in an active ultrasonic sensor's reading, and write its value to a logfile upon a defined trigger condition a set number of iterations
+ -- LOGREG.kl requires a function call within a .tp program structured as follows: CALL LOGREG[[PR index value], [log file name], [active sensor], [sensor output value], [count iterator]
+
 %NOLOCKGROUP			-- Because this program does not contain any motion
 %NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
 %NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
