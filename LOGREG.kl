@@ -133,7 +133,7 @@ BEGIN	-- Program beginning of MAIN
 	-- OPEN FILE logFile('AP', prmLogFile) 	-- opens a log file with append (AP) file access privileges
 	-- ENDIF
 	-- IF **LOGFILE.LOG DOES NOT  EXIST**
-	CREATE_VAR (fileWithExt, 'temp', 'logFile', 'FILE' ,0, 0, 0, 0, status) -- creates logFile.log
+	CREATE_VAR (fileWithExt, 'temp', 'logFile.log', 'FILE' ,0, 0, 0, 0, status) -- creates logFile.log
 	OPEN FILE logFile ('AP', prmLogFile) 	-- opens a log file with append (AP) file access privileges
 	-- ENDIF
 	
@@ -145,7 +145,7 @@ BEGIN	-- Program beginning of MAIN
 	
 	prmPosRegID = prmPosRegID - 10
 	
-	WRITE logFile (timeStr, ' Cycle:', cycleCount, ', PROBE POSITION:', prmPosRegID, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT (mm):', distUSS::9::3, ', Z:', posreg.z::9::3, CR) -- testing entries along with the z pos
+	WRITE logFile (timeStr, ', Cycle:', cycleCount, ', PROBE POSITION:', prmPosRegID, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT:', distUSS::9::3, ', Z HEIGHT:', posreg.z::9::3, CR) -- testing entries along with the z pos
 	 -- WRITE logFile (timeStr, ', PR:',
 	--	prmPosRegID, ', X:',		
 	--	posreg.x::9::3, ', Y:',
