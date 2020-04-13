@@ -18,7 +18,13 @@ class pattern:
 			self.value = float(re.search(self.expression, self.entry).group())
 		return self.value
 
-### BEGIN PROGRAM ###
+### VARAIBLE INITIALIZATION ###
+
+regex_probePosition = '(?<=PROBE POSITION: )\d'
+regex_activeSensor = '(?<=ACTIVE SENSOR: )\d'
+regex_sensorReadout = '(?<=SENSOR READOUT: )\d*.{4}'
+regex_ZValue = '(?<=Z HEIGHT:   )\d*.{4}'
+
 p1s1 = []
 p1s2 = []
 p1s3 = []
@@ -30,6 +36,10 @@ p2s3 = []
 p3s1 = []
 p3s2 = []
 p3s3 = []
+
+listNames = [p1s1, p1s2, p1s3, p2s1, p2s2, p2s3, p3s1, p3s2, p3s3]
+
+### FUNCTION DEEFININTIONS ###
 
 def recordData():
 		if (probePosition.value == 1 and activeSensor.value == 1):
@@ -53,16 +63,13 @@ def recordData():
 		elif (probePosition.value == 3 and activeSensor.value == 3):
 			p3s3.append([sensorReadout.value, ZValue.value])
 
+### BEGIN PROGRAM ###
+
 with open (log_file_path, "r") as file:
 	print ("filename: ", file.name)
 	print ("read/write privleges: ", file.mode, '\n')
 
 	logContents = file.readlines()
-
-regex_probePosition = '(?<=PROBE POSITION: )\d'
-regex_activeSensor = '(?<=ACTIVE SENSOR: )\d'
-regex_sensorReadout = '(?<=SENSOR READOUT: )\d*.{4}'
-regex_ZValue = '(?<=Z HEIGHT:   )\d*.{4}'
 
 for n, entry in enumerate(logContents):
 	print ("n is:", n + 1)
@@ -80,7 +87,15 @@ for n, entry in enumerate(logContents):
 
 	recordData()
 
-	#results = compute(probePosition.value, activeSensor.value, sensorReadout.value, ZValue.value, n)
-	#results.makeList(probePosition.value, activeSensor.value, sensorReadout.value, ZValue.value, n)
+#print ("this:", (listNames[3])[0])
+
+def findAvg():
+	for i in listNames: #iterate by list
+		print (len(i))
+		for j in i: #iterate by current list element (should be 5000)
+			print (abc)
+
+
+findAvg()
 
 file.close()
