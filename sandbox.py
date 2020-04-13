@@ -25,6 +25,8 @@ regex_activeSensor = '(?<=ACTIVE SENSOR: )\d'
 regex_sensorReadout = '(?<=SENSOR READOUT: )\d*.{4}'
 regex_ZValue = '(?<=Z HEIGHT:   )\d*.{4}'
 
+averages = []
+
 p1s1 = []
 p1s2 = []
 p1s3 = []
@@ -90,12 +92,32 @@ for n, entry in enumerate(logContents):
 #print ("this:", (listNames[3])[0])
 
 def findAvg():
+
 	for i in listNames: #iterate by list
 		print (len(i))
+		sensorSum = 0
+		robotSum = 0
 		for j in i: #iterate by current list element (should be 5000)
-			print (abc)
+			sensorVal = j[0]
+			robotVal = j[1]
 
+			sensorSum = sensorVal + sensorSum
+			print ("sensorSum is:", sensorSum)
+			sensorAvg = sensorSum / len(i)
+			print ("sensorAvg is:", sensorAvg)
+			# prevValue = currentValue # looks at previous value (holds this iterations value of currentValue in the next iteration of the for loop)
+
+			#currentRobotValue = j[1]
+			robotSum = robotVal + robotSum
+			print ("robotSum is:", robotSum)
+			robotAvg = robotSum / len(i)
+			print ("robotAvg is:", robotAvg)
+	
+	#write robtAvg and sensorAvg to a result list in order to average each of its entries. thi slist elemts are also 2 element lists, except they are sensor avg and robot avg
+	averages.append([sensorAvg, robotAvg])
 
 findAvg()
+
+print (averages[0])
 
 file.close()
