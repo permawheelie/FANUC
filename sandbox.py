@@ -25,7 +25,8 @@ regex_activeSensor = '(?<=ACTIVE SENSOR: )\d'
 regex_sensorReadout = '(?<=SENSOR READOUT: )\d*.{4}'
 regex_ZValue = '(?<=Z HEIGHT:   )\d*.{4}'
 
-averages = []
+resultingAverages = []
+outliers = []
 
 p1s1 = []
 p1s2 = []
@@ -65,6 +66,40 @@ def recordData():
 		elif (probePosition.value == 3 and activeSensor.value == 3):
 			p3s3.append([sensorReadout.value, ZValue.value])
 
+def findAvg():
+
+	for i in listNames: #iterate by p#s# list
+		# print (len(i))
+		sensorSum = 0
+		robotSum = 0
+		tolerance = 0.001 #this is a percentage
+		for j in i: #iterate by current p#s# list element (should be 5000)
+			sensorVal = j[0]
+			robotVal = j[1]
+
+			sensorSum = sensorVal + sensorSum
+			sensorAvg = sensorSum / len(i)
+			
+			#currentRobotValue = j[1]
+			robotSum = robotVal + robotSum
+			robotAvg = robotSum / len(i)
+
+	
+	resultingAverages.append([round(sensorAvg, 3), round(robotAvg, 3)])
+	toleranceUpper = sensorAvg * ((100 + tolerance) / 100)
+	toleranceLower = sensorAvg * ((100 - tolerance) / 100)
+	for m in i: #interate by current p#s# element again
+		sensorVal = m[0]
+		robotVal = m[1]
+		toleranceLower = round(toleranceLower, 3)
+		toleranceUpper = round(toleranceUpper, 3)
+		if ((sensorVal <= toleranceLower) | (sensorVal >= toleranceUpper)):
+			outliers.append([sensorVal, robotVal])
+
+	outlierCount = len(outliers)
+	print ("total outlier count with a ", tolerance, "% tolerance: ", outlierCount)
+	return
+
 ### BEGIN PROGRAM ###
 
 with open (log_file_path, "r") as file:
@@ -74,50 +109,23 @@ with open (log_file_path, "r") as file:
 	logContents = file.readlines()
 
 for n, entry in enumerate(logContents):
-	print ("n is:", n + 1)
+	# print ("n is:", n + 1)
 	probePosition = pattern(regex_probePosition, entry)
-	print ("probePostion is: ", probePosition.value, "its type is: ", type(probePosition.value))
+	# print ("probePostion is: ", probePosition.value, "its type is: ", type(probePosition.value))
 
 	activeSensor = pattern(regex_activeSensor, entry)
-	print ("activeSensor is: ", activeSensor.value, "its type is: ", type(activeSensor.value))
+	# print ("activeSensor is: ", activeSensor.value, "its type is: ", type(activeSensor.value))
 
 	sensorReadout = pattern(regex_sensorReadout, entry)
-	print ("sensorReadout is: ", sensorReadout.value, "its type is: ", type(sensorReadout.value))
+	# print ("sensorReadout is: ", sensorReadout.value, "its type is: ", type(sensorReadout.value))
 
 	ZValue = pattern(regex_ZValue, entry)
-	print ("ZValue is: ", ZValue.value, "its type is: ", type(ZValue.value),  '\n')
+	# print ("ZValue is: ", ZValue.value, "its type is: ", type(ZValue.value),  '\n')
 
 	recordData()
 
-#print ("this:", (listNames[3])[0])
-
-def findAvg():
-
-	for i in listNames: #iterate by list
-		print (len(i))
-		sensorSum = 0
-		robotSum = 0
-		for j in i: #iterate by current list element (should be 5000)
-			sensorVal = j[0]
-			robotVal = j[1]
-
-			sensorSum = sensorVal + sensorSum
-			print ("sensorSum is:", sensorSum)
-			sensorAvg = sensorSum / len(i)
-			print ("sensorAvg is:", sensorAvg)
-			# prevValue = currentValue # looks at previous value (holds this iterations value of currentValue in the next iteration of the for loop)
-
-			#currentRobotValue = j[1]
-			robotSum = robotVal + robotSum
-			print ("robotSum is:", robotSum)
-			robotAvg = robotSum / len(i)
-			print ("robotAvg is:", robotAvg)
-	
-	#write robtAvg and sensorAvg to a result list in order to average each of its entries. thi slist elemts are also 2 element lists, except they are sensor avg and robot avg
-	averages.append([sensorAvg, robotAvg])
-
 findAvg()
 
-print (averages[0])
+print ("resulting p#s# averages are:", resultingAverages)
 
 file.close()
