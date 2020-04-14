@@ -45,6 +45,8 @@ listNames = [p1s1, p1s2, p1s3, p2s1, p2s2, p2s3, p3s1, p3s2, p3s3]
 ### FUNCTION DEEFININTIONS ###
 
 def recordData():
+
+		#high probe position
 		if (probePosition.value == 1 and activeSensor.value == 1):
 			p1s1.append([sensorReadout.value, ZValue.value])
 		elif (probePosition.value == 1 and activeSensor.value == 2):
@@ -52,6 +54,7 @@ def recordData():
 		elif (probePosition.value == 1 and activeSensor.value == 3):
 			p1s3.append([sensorReadout.value, ZValue.value])
 
+		#medium probe position
 		elif (probePosition.value == 2 and activeSensor.value == 1):
 			p2s1.append([sensorReadout.value, ZValue.value])
 		elif (probePosition.value == 2 and activeSensor.value == 2):
@@ -59,6 +62,7 @@ def recordData():
 		elif (probePosition.value == 2 and activeSensor.value == 3):
 			p2s3.append([sensorReadout.value, ZValue.value])
 
+		# low probe postion
 		elif (probePosition.value == 3 and activeSensor.value == 1):
 			p3s1.append([sensorReadout.value, ZValue.value])
 		elif (probePosition.value == 3 and activeSensor.value == 2):
@@ -72,7 +76,7 @@ def findAvg():
 		# print (len(i))
 		sensorSum = 0
 		robotSum = 0
-		tolerance = 0.001 #this is a percentage
+		tolerance = 3.000 #this is a percentage
 		for j in i: #iterate by current p#s# list element (should be 5000)
 			sensorVal = j[0]
 			robotVal = j[1]
@@ -80,23 +84,24 @@ def findAvg():
 			sensorSum = sensorVal + sensorSum
 			sensorAvg = sensorSum / len(i)
 			
-			#currentRobotValue = j[1]
 			robotSum = robotVal + robotSum
 			robotAvg = robotSum / len(i)
 
 	
 	resultingAverages.append([round(sensorAvg, 3), round(robotAvg, 3)])
-	toleranceUpper = sensorAvg * ((100 + tolerance) / 100)
 	toleranceLower = sensorAvg * ((100 - tolerance) / 100)
+	toleranceLower = round(toleranceLower, 3)
+	toleranceUpper = sensorAvg * ((100 + tolerance) / 100)
+	toleranceUpper = round(toleranceUpper, 3)
+	
 	for m in i: #interate by current p#s# element again
 		sensorVal = m[0]
 		robotVal = m[1]
-		toleranceLower = round(toleranceLower, 3)
-		toleranceUpper = round(toleranceUpper, 3)
-		if ((sensorVal <= toleranceLower) | (sensorVal >= toleranceUpper)):
+		if ((sensorVal <= toleranceLower) | (sensorVal >= toleranceUpper)): #if sensorVal is out of tolerance
 			outliers.append([sensorVal, robotVal])
 
 	outlierCount = len(outliers)
+	#add which p#p# list as arg 1 below
 	print ("total outlier count with a ", tolerance, "% tolerance: ", outlierCount)
 	return
 
@@ -108,7 +113,7 @@ with open (log_file_path, "r") as file:
 
 	logContents = file.readlines()
 
-for n, entry in enumerate(logContents):
+for n, entry in enumerate(logContents): # iterates for however many lines are in the logfile that is being read
 	# print ("n is:", n + 1)
 	probePosition = pattern(regex_probePosition, entry)
 	# print ("probePostion is: ", probePosition.value, "its type is: ", type(probePosition.value))
@@ -125,7 +130,6 @@ for n, entry in enumerate(logContents):
 	recordData()
 
 findAvg()
-
-print ("resulting p#s# averages are:", resultingAverages)
-
+# print ("resulting p#s# averages are:", '\n',"p1s1: ", resultingAverages[0], '\n',"p1s2: ", resultingAverages[1], '\n',"p1s3: ", resultingAverages[2], '\n',"p2s1: ", resultingAverages[3], '\n',"p2s2: ", resultingAverages[4], '\n',"p2s3: ", resultingAverages[5], '\n',"p3s1: ", resultingAverages[6], '\n',"p3s2: ", resultingAverages[7], '\n',"p3s3: ", resultingAverages[8])
+print ("p3s3 averages:", resultingAverages[0])
 file.close()
