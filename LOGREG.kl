@@ -43,6 +43,7 @@ BEGIN		--program beginning of GET_TPE_PRM2
 	
 	IF data_type<>exp_type THEN
 		WRITE TPERROR('[LOGREG] bad datatype for param', param_no, CR)
+		CLOSE FILE logFile
 		ABORT
 	ENDIF
 END GET_TPE_PRM2
@@ -122,11 +123,13 @@ BEGIN	-- Program beginning of MAIN
 	posreg = GET_POS_REG(prmPosRegID, status)
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not get PR', prmPosRegID, CR)
+		CLOSE FILE logFile
 		ABORT
 	ENDIF
 	IF UNINIT(posreg) THEN
 		WRITE TPERROR('[LOGREG] PR', prmPosRegID, ' is UNINIT', CR)
 		ABORT
+		CLOSE FILE logFile
 	ENDIF
 	fileWithExt = prmLogFile + '.log'
 	-- IF **LOGFILE.LOG EXISTS**
@@ -141,6 +144,7 @@ BEGIN	-- Program beginning of MAIN
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not open logFile', prmLogFile, CR)
 		ABORT
+		CLOSE FILE logFile
 	ENDIF
 	
 	prmPosRegID = prmPosRegID - 10
@@ -158,6 +162,7 @@ BEGIN	-- Program beginning of MAIN
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] error writing to logFile', status, CR)
 		ABORT
+		CLOSE FILE logFile
 	ENDIF
 	
 	CLOSE FILE logFile
