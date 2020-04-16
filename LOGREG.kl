@@ -6,7 +6,6 @@ PROGRAM LOGREG			-- program name declaration
 %NOLOCKGROUP			-- Because this program does not contain any motion
 %NOPAUSE = ERROR + COMMAND + TPENABLE  --  Will not pause on ERROR, COMMAND, or TPENABLE
 %NOABORT = ERROR + COMMAND + TPENABLE  --  Will not abort on ERROR, COMMAND, or TPENABLE
- -- %INCLUDE logFile.log -- this supposedly includes the logFile that LOGREG is supposed to write data to
 
 
 %COMMENT = 'MOVE PR TO .LOG UPON TRIG'
