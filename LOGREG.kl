@@ -16,17 +16,26 @@ CONST
 	TPE_TYP_REAL = 2
 	TPE_TYP_STR = 3
 VAR			-- Variable declaration start
-	logFile 		: FILE			-- handles what .log file will be created/written to
+	logFile 			: FILE			-- handles what .log file will be created/written to
 	prmPosRegID	: INTEGER		-- handles which position register to pull from
-	prmLogFile		: STRING[16]	-- handles log file save desitination
-	timeInt		: INTEGER		-- storage location for real-time world clock value
-	timeStr		: STRING[18]	-- storage location for post int-to-string conversion of the world clock
-	status		: INTEGER		-- '0' denotes normal status, anything else non-zero indicates an error
-	posreg		: XYZWPR		-- variable used to input PR data to GET_POS_REG
+	prmLogFile	: STRING[16]	-- handles log file save desitination
+	timeInt			: INTEGER		-- storage location for real-time world clock value
+	timeStr			: STRING[18]	-- storage location for post int-to-string conversion of the world clock
+	status			: INTEGER		-- '0' denotes normal status, anything else non-zero indicates an error
+	posreg			: XYZWPR		-- variable used to input PR data to GET_POS_REG
 	fileWithExt		:STRING[4]
-	activeUSS	:INTEGER		-- storage location to tell which sensor is giving LOGREG its reading (1 = UIT-502, 2 = UIT-508, 3 = BANNER QT50ULBQ6)
-	distUSS	:REAL
+	activeUSS		:INTEGER		-- storage location to tell which sensor is giving LOGREG its reading (1 = UIT-502, 2 = UIT-508, 3 = BANNER QT50ULBQ6)
+	distUSS		:REAL
 	cycleCount		: INTEGER
+	filePos			:INTEGER		-- stores the filesize of the logfile attained from the GET_FILE_POS function
+
+ROUTINE DEL_PREV_LOG(prmLogFile: STRING; status: INTEGER)
+BEGIN
+	DELETE_FILE('UD1:\' + prmLogFile, FALSE, status)
+	IF status <> 0 THEN
+		WRITE TPERROR('[LOGREG] log file does not exist', CR)
+	ENDIF
+END DEL_PREV_LOG
 
 
 ROUTINE GET_TPE_PRM2 (param_no : INTEGER; exp_type : INTEGER; int_val : INTEGER; real_val : REAL; str_val : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
@@ -47,13 +56,12 @@ BEGIN		--program beginning of GET_TPE_PRM2
 		ABORT
 	ENDIF
 END GET_TPE_PRM2
-		
-		
+	
 		
 ROUTINE GET_TPE_INT (param_no : INTEGER; int_val : INTEGER) 	-- gets the GET_TPE_PRM2 its INTEGER component
 VAR
 	real_val	: REAL
-	str_val	: STRING[1]
+	str_val		: STRING[1]
 BEGIN		-- program beginning of GET_TPE_INT
 	GET_TPE_PRM2(param_no, TPE_TYP_INT, int_val, real_val, str_val)		-- int_val, real_val, and str_val must all be present in this call , regardless of if they are not all used
 END GET_TPE_INT
@@ -61,7 +69,7 @@ END GET_TPE_INT
 	
 ROUTINE GET_TPE_STR (param_no : INTEGER; str_val : STRING)	-- gets the GET_TPE_PRM2 its STRING component
 VAR
-	int_val	: INTEGER
+	int_val		: INTEGER
 	real_val	: REAL
 BEGIN		-- program beginning of GET_TPE_STR
 	GET_TPE_PRM2(param_no, TPE_TYP_STR, int_val, real_val, str_val)	-- int_val, real_val, and str_val must all be present in this call , regardless of if they are not all used
@@ -69,17 +77,18 @@ END GET_TPE_STR
 
 ROUTINE GET_TPE_REAL (param_no : INTEGER; real_val : REAL)		-- gets the GET_TPE_PRM2 its REASL component
 VAR
-	int_val	: INTEGER
+	int_val		: INTEGER
 	str_val		: STRING[1]
 BEGIN
 	GET_TPE_PRM2(param_no, TPE_TYP_REAL, int_val, real_val, str_val)
 END GET_TPE_REAL
 
+
 ROUTINE CNV_TIME_ST2 (timeIn : INTEGER; timeOut : STRING)
 VAR
-	secondsI : INTEGER
-	secondsS : STRING[4]
-BEGIN		-- PROGRAM beginning of the timestamp generator
+	secondsI	 : INTEGER
+	secondsS	 : STRING[4]
+BEGIN		-- PROGRAM beginning OF the timestamp generator
 	-- use FANUC built-in functionality to do most of the work
 	CNV_TIME_STR(timeIn, timeOut)
 	-- chop off trailing spaces, if any are present
@@ -103,7 +112,7 @@ BEGIN		-- PROGRAM beginning of the timestamp generator
 	timeOut = timeOut + secondsS
 END CNV_TIME_ST2
 
-
+-- ######################## MAIN #########################
 
 BEGIN	-- Program beginning of MAIN
 	-- clear the TPERROR screen 
@@ -131,15 +140,29 @@ BEGIN	-- Program beginning of MAIN
 		ABORT
 		CLOSE FILE logFile
 	ENDIF
+	DEL_PREV_LOG(prmLogFile, status)
 	fileWithExt = prmLogFile + '.log'
-	-- IF **LOGFILE.LOG EXISTS**
-	-- OPEN FILE logFile('AP', prmLogFile) 	-- opens a log file with append (AP) file access privileges
-	-- ENDIF
-	-- IF **LOGFILE.LOG DOES NOT  EXIST**
-	CREATE_VAR (fileWithExt, 'temp', 'logFile.log', 'FILE' ,0, 0, 0, 0, status) -- creates logFile.log
-	OPEN FILE logFile ('AP', prmLogFile) 	-- opens a log file with append (AP) file access privileges
+	
+	IF (IO_STATUS(logFile) = 0) --**IF LOGFILE.LOG EXISTS**
+	THEN
+		OPEN FILE logFile('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
+		filePos = GET_FILE_POS(logFile)
+	--**ENSURE FILE IS BLANK**
+		IF (filePos <> 0) -- **IF FILE IS NOT EMPTY**
+		THEN -- wipe logfile contents
+			CLEAR('logFile', status)
+		-- ELSE **IF FILE IS EMPTY** do nothing
+		ENDIF
+	ELSE 
+	-- **IF LOGFILE.LOG DOES NOT  EXIST**
+		CREATE_VAR (fileWithExt, 'temp', 'logFile.log', 'FILE' ,0, 0, 0, 0, status) -- creates logFile.log
+		OPEN FILE logFile('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
+	ENDIF
+	
+	OPEN FILE logFile ('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
 	-- ENDIF
 	
+	--the following if block ha been replaced by the above if else chain regarding logfile existence, yet it remains here in the event that the above code does not work as exepcted
 	status = IO_STATUS(logFile)
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not open logFile', prmLogFile, CR)
@@ -147,7 +170,7 @@ BEGIN	-- Program beginning of MAIN
 		CLOSE FILE logFile
 	ENDIF
 	
-	prmPosRegID = prmPosRegID - 10
+	prmPosRegID = prmPosRegID - 10 -- PRs del\ivering data are 10-13, subtracting 10 makes indexing 1-3 easier  to understand within the scope of the logfile
 	
 	WRITE logFile (timeStr, ', Cycle:', cycleCount, ', PROBE POSITION:', prmPosRegID, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT:', distUSS::9::3, ', Z HEIGHT:', posreg.z::9::3, CR) -- testing entries along with the z pos
 	 -- WRITE logFile (timeStr, ', PR:',
