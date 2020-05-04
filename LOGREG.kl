@@ -24,7 +24,7 @@ VAR			-- Variable declaration start
 	status			: INTEGER		-- '0' denotes normal status, anything else non-zero indicates an error
 	posreg			: XYZWPR		-- variable used to input PR data to GET_POS_REG
 	fileWithExt		:STRING[4]
-	activeUSS		:INTEGER		-- storage location to tell which sensor is giving LOGREG its reading (1 = UIT-502, 2 = UIT-508, 3 = BANNER QT50ULBQ6)
+	activeUSS		:INTEGER		-- storage location to tell which sensor is giving LOGREG its reading (1 = IFM UIT-502, 2 = IFM UIT-508, 3 = BANNER QT50ULBQ6)
 	distUSS		:REAL
 	cycleCount		: INTEGER
 	filePos			:INTEGER		-- stores the filesize of the logfile attained from the GET_FILE_POS function
@@ -38,7 +38,7 @@ BEGIN
 END DEL_PREV_LOG
 
 
-ROUTINE GET_TPE_PRM2 (param_no : INTEGER; exp_type : INTEGER; int_val : INTEGER; real_val : REAL; str_val : STRING)	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
+ROUTINE GET_TPE_PRM2 (param_no : INTEGER; exp_type : INTEGER; int_val : INTEGER; real_val : REAL; str_val : STRING )	-- wraps the built in GET_TPE_PRM prior to checking status and dataType, or ABORTs if not possible
 VAR
 	data_type	: INTEGER
 	status		: INTEGER
@@ -75,7 +75,7 @@ BEGIN		-- program beginning of GET_TPE_STR
 	GET_TPE_PRM2(param_no, TPE_TYP_STR, int_val, real_val, str_val)	-- int_val, real_val, and str_val must all be present in this call , regardless of if they are not all used
 END GET_TPE_STR
 
-ROUTINE GET_TPE_REAL (param_no : INTEGER; real_val : REAL)		-- gets the GET_TPE_PRM2 its REASL component
+ROUTINE GET_TPE_REAL (param_no : INTEGER; real_val : REAL)		-- gets the GET_TPE_PRM2 its REAL component
 VAR
 	int_val		: INTEGER
 	str_val		: STRING[1]
@@ -140,23 +140,23 @@ BEGIN	-- Program beginning of MAIN
 		ABORT
 		CLOSE FILE logfile
 	ENDIF
-	DEL_PREV_LOG(prmLogFile, status)
+	--DEL_PREV_LOG(prmLogFile, status)
 	fileWithExt = prmLogFile + '.log'
 	
+
+		
 	IF (IO_STATUS(logfile) = 0) --**IF LOGFILE EXISTS**
 	THEN
-		OPEN FILE logfile('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
-		filePos = GET_FILE_POS(logfile)
-	--**ENSURE FILE IS BLANK**
-		IF (filePos <> 0) -- **IF FILE IS NOT EMPTY**
-		THEN -- wipe logfile contents
-			CLEAR('logfile', status)
-		-- ELSE **IF FILE IS EMPTY** do nothing
-		ENDIF
+		OPEN FILE logfile('AP', prmLogFile) 	-- opens the log file with append (AP) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
+		-- filePos = GET_FILE_POS(logfile)
+		-- IF (cycleCount = 0) -- if this is the beginning of writing to the logfile
+		-- THEN
+		-- CLEAR('logfile', status)
+		-- ENDIF
 	ELSE 
 	-- **IF LOGFILE DOES NOT  EXIST**
 		CREATE_VAR (fileWithExt, 'temp', 'logfile', 'FILE' ,0, 0, 0, 0, status) -- creates logfile.log
-		OPEN FILE logfile('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
+		OPEN FILE logfile('AP', prmLogFile) 	-- opens the log file with append (AP) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
 	ENDIF
 	
 	--the following if block ha been replaced by the above if else chain regarding logfile existence, yet it remains here in the event that the above code does not work as exepcted
