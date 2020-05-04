@@ -16,7 +16,7 @@ CONST
 	TPE_TYP_REAL = 2
 	TPE_TYP_STR = 3
 VAR			-- Variable declaration start
-	logFile 			: FILE			-- handles what .log file will be created/written to
+	logfile 			: FILE			-- handles what .log file will be created/written to
 	prmPosRegID	: INTEGER		-- handles which position register to pull from
 	prmLogFile	: STRING[16]	-- handles log file save desitination
 	timeInt			: INTEGER		-- storage location for real-time world clock value
@@ -52,7 +52,7 @@ BEGIN		--program beginning of GET_TPE_PRM2
 	
 	IF data_type<>exp_type THEN
 		WRITE TPERROR('[LOGREG] bad datatype for param', param_no, CR)
-		CLOSE FILE logFile
+		CLOSE FILE logfile
 		ABORT
 	ENDIF
 END GET_TPE_PRM2
@@ -132,48 +132,45 @@ BEGIN	-- Program beginning of MAIN
 	posreg = GET_POS_REG(prmPosRegID, status)
 	IF status<>0 THEN
 		WRITE TPERROR('[LOGREG] could not get PR', prmPosRegID, CR)
-		CLOSE FILE logFile
+		CLOSE FILE logfile
 		ABORT
 	ENDIF
 	IF UNINIT(posreg) THEN
 		WRITE TPERROR('[LOGREG] PR', prmPosRegID, ' is UNINIT', CR)
 		ABORT
-		CLOSE FILE logFile
+		CLOSE FILE logfile
 	ENDIF
 	DEL_PREV_LOG(prmLogFile, status)
 	fileWithExt = prmLogFile + '.log'
 	
-	IF (IO_STATUS(logFile) = 0) --**IF LOGFILE.LOG EXISTS**
+	IF (IO_STATUS(logfile) = 0) --**IF LOGFILE EXISTS**
 	THEN
-		OPEN FILE logFile('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
-		filePos = GET_FILE_POS(logFile)
+		OPEN FILE logfile('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
+		filePos = GET_FILE_POS(logfile)
 	--**ENSURE FILE IS BLANK**
 		IF (filePos <> 0) -- **IF FILE IS NOT EMPTY**
 		THEN -- wipe logfile contents
-			CLEAR('logFile', status)
+			CLEAR('logfile', status)
 		-- ELSE **IF FILE IS EMPTY** do nothing
 		ENDIF
 	ELSE 
-	-- **IF LOGFILE.LOG DOES NOT  EXIST**
-		CREATE_VAR (fileWithExt, 'temp', 'logFile.log', 'FILE' ,0, 0, 0, 0, status) -- creates logFile.log
-		OPEN FILE logFile('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
+	-- **IF LOGFILE DOES NOT  EXIST**
+		CREATE_VAR (fileWithExt, 'temp', 'logfile', 'FILE' ,0, 0, 0, 0, status) -- creates logfile.log
+		OPEN FILE logfile('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
 	ENDIF
-	
-	OPEN FILE logFile ('RW', prmLogFile) 	-- opens a log file with read/write (RW) file access privileges (write is necessary only to delete the logfile created by the previous instance of this .kl file's execution)
-	-- ENDIF
 	
 	--the following if block ha been replaced by the above if else chain regarding logfile existence, yet it remains here in the event that the above code does not work as exepcted
-	status = IO_STATUS(logFile)
-	IF status<>0 THEN
-		WRITE TPERROR('[LOGREG] could not open logFile', prmLogFile, CR)
-		ABORT
-		CLOSE FILE logFile
-	ENDIF
+	-- status = IO_STATUS(logfile)
+	-- IF status<>0 THEN
+		-- WRITE TPERROR('[LOGREG] could not open file: ', prmLogFile, CR)
+		-- ABORT
+		-- CLOSE FILE logfile
+	-- ENDIF
 	
-	prmPosRegID = prmPosRegID - 10 -- PRs del\ivering data are 10-13, subtracting 10 makes indexing 1-3 easier  to understand within the scope of the logfile
+	prmPosRegID = prmPosRegID - 10 -- PRs del\ivering data are indexed 10-13 on the robot controller, subtracting 10 makes indexing 1-3 easier  to understand within the scope of the logfile
 	
-	WRITE logFile (timeStr, ', Cycle:', cycleCount, ', PROBE POSITION:', prmPosRegID, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT:', distUSS::9::3, ', Z HEIGHT:', posreg.z::9::3, CR) -- testing entries along with the z pos
-	 -- WRITE logFile (timeStr, ', PR:',
+	WRITE logfile(timeStr, ', Cycle:', cycleCount, ', PROBE POSITION:', prmPosRegID, ', ACTIVE SENSOR:', activeUSS, ', SENSOR READOUT:', distUSS::9::3, ', Z HEIGHT:', posreg.z::9::3, CR) -- testing entries along with the z pos
+	 -- WRITE logfile (timeStr, ', PR:',
 	--	prmPosRegID, ', X:',		
 	--	posreg.x::9::3, ', Y:',
 	--	posreg.y::9::3, ', Z:',
@@ -181,13 +178,14 @@ BEGIN	-- Program beginning of MAIN
 	--	posreg.w::9::3, ', P:',
 	--	posreg.p::9::3, ', R:',
 	--	posreg.r::9::3, CR)		-- write the PR index, X, Y, Z, W, P, and R fields of the PR sequentially. '::9::3' indicated that this information will be 9 total characters in length (::9), taken to 3 decimal places (::3) after first writing the curren time
-	status = IO_STATUS(logFile)
+	
+	status = IO_STATUS(logfile)
 	IF status<>0 THEN
-		WRITE TPERROR('[LOGREG] error writing to logFile', status, CR)
+		WRITE TPERROR('[LOGREG] file write error code: ', status, CR)
 		ABORT
-		CLOSE FILE logFile
+		CLOSE FILE logfile
 	ENDIF
 	
-	CLOSE FILE logFile
+	CLOSE FILE logfile
 	
 END LOGREG		-- End program 
